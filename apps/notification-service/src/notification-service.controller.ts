@@ -1,7 +1,7 @@
 import { Controller, Logger } from '@nestjs/common';
 import { NotificationServiceService } from './notification-service.service';
-import { Ctx, EventPattern, MessagePattern, Payload, RmqContext, RpcException } from '@nestjs/microservices';
-import { QUEUES, EXCHANGES, getRetryCount, RedisService } from '@app/shared';
+import { Ctx, EventPattern, KafkaContext, MessagePattern, Payload, RpcException } from '@nestjs/microservices';
+import { QUEUES, EXCHANGES, getRetryCount, RedisService, KAFKA_TOPICS } from '@app/shared';
 
 @Controller()
 export class NotificationServiceController {
@@ -12,16 +12,11 @@ export class NotificationServiceController {
     private readonly redisService: RedisService, // <-- Inject Redis
   ) { }
 
-  @EventPattern('task.created')
-  async handleTaskCreated(@Payload() data: any, @Ctx() context: RmqContext) {
-    const channel = context.getChannelRef();
-    const message = context.getMessage();
-    const headers = message.properties?.headers || {};
-    const retryCount = getRetryCount(headers, QUEUES.NOTIFY.RETRY);
-
-    // 1. Idempotency Check using ioredis positional arguments
+  @EventPattern(KAFKA_TOPICS.TASK_CREATED)
+  async handleTaskCreated(@Payload() data: any, @Ctx() context: KafkaContext) {
+    // 1. Idempotency Check using Redis
     const redis = this.redisService.getClient();
-    const key = `event:${data.taskId || data.eventId}`; // or whichever field has the unique ID
+    const key = `event:${data.taskId || data.eventId}`;
 
     const result = await redis.set(
       key,
@@ -33,36 +28,19 @@ export class NotificationServiceController {
 
     if (result !== 'OK') {
       console.warn(`Duplicate event detected for taskId: ${data.taskId}. Skipping processing.`);
-      channel.ack(message);
-      return;
+      return; // Just return; NestJS will auto-commit this skipped message offset
     }
 
     // 2. Process message
     try {
       await this.notificationService.handleTaskCreated(data);
-      channel.ack(message);
     } catch (error) {
-      // 3. Clear Redis key if processing fails so we can retry
+      // 3. Clear Redis key if processing fails so we can retry on re-delivery
       await redis.del(key);
+      this.logger.error(`Failed to process notification for task ${data.taskId}: ${error.message}`);
 
-      console.log("handleTaskCreated retryCount:", retryCount);
-      if (retryCount < 3) {
-        console.log(`Failed to process notification, dead-lettering to retry queue.`);
-        channel.nack(message, false, false);
-      } else {
-        console.log('Retry limit reached, publishing to DLQ and acknowledging original message.');
-        channel.publish(
-          EXCHANGES.DLQ.name,
-          QUEUES.NOTIFY.DLQ,
-          message.content,
-          {
-            headers,
-            deliveryMode: 2,
-            contentType: message.properties?.contentType || 'application/json',
-          }
-        );
-        channel.ack(message);
-      }
+      // Throw the error so NestJS knows processing failed (and does not commit offset)
+      throw error;
     }
   }
 

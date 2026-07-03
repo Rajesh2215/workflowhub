@@ -18,3 +18,5 @@ export * from './logging/http-correlation.middleware';
 export * from './logging/rpc-correlation.interceptor';
 
 export * from './logging/tracer';
+
+export * from './kafka/kafka.constants';

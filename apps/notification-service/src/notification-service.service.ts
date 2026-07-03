@@ -11,10 +11,10 @@ export class NotificationServiceService {
     @InjectModel(Notification.name)
     private notificationModel: Model<Document>
   ) { }
+
   async handleTaskCreated(data: any) {
     // send email or push notification
     return this.notificationModel.create(data)
-
   }
 
   async createNotification(data: any) {

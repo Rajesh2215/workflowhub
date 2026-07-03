@@ -1,29 +1,40 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Task, TaskDocument } from '../schemas/task.schema';
 import { Model } from 'mongoose';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { ClientKafka, ClientProxy, RpcException } from '@nestjs/microservices';
+import { KAFKA_TOPICS } from '@app/shared';
 
 @Injectable()
-export class TaskServiceService {
+export class TaskServiceService implements OnModuleInit {
   constructor(
     @InjectModel(Task.name)
     private taskModel: Model<TaskDocument>,
 
     @Inject('NOTIFICATION_SERVICE')
     private readonly notificationClient: ClientProxy,
+
+    @Inject('KAFKA_SERVICE')
+    private readonly kafkaClient: ClientKafka,
+
   ) { }
+
+  async onModuleInit() {
+    // Connects to Kafka during the bootstrap process
+    await this.kafkaClient.connect();
+  }
+
 
   async create(body) {
     const task = await this.taskModel.create(body);
 
-    this.notificationClient.emit('task.created', {
+    this.kafkaClient.emit(KAFKA_TOPICS.TASK_CREATED, {
       userId: body.userId,
       taskId: task._id,
       title: task.title,
       message: "Task Created Successfully",
       type: "EMAIL"
-    });
+    })
 
     return {
       message: 'Task created successfully',
