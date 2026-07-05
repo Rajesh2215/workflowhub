@@ -12,6 +12,7 @@ services:
       - auth-service
       - task-service
       - notification-service
+      - analytics-service
       - rabbitmq
     networks:
       - backend
@@ -166,10 +167,35 @@ services:
     networks:
       - backend
 
+  mongo-analytics:
+    image: mongo:7
+    container_name: mongo-analytics
+    ports:
+      - "27020:27017"
+    volumes:
+      - mongo_analytics_data:/data/db
+    networks:
+      - backend
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: ./apps/analytics-service/Dockerfile
+    container_name: analytics-service
+    env_file:
+      - ./apps/analytics-service/.env
+    depends_on:
+      - mongo-analytics
+      - kafka
+      - redis
+    networks:
+      - backend
+
 volumes:
   mongo_auth_data:
   mongo_task_data:
   mongo_notification_data:
+  mongo_analytics_data:
   kafka-data:
 
 networks:

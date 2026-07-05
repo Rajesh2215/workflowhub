@@ -3,6 +3,7 @@ import { AppController } from './api-gateway.controller';
 import { AppService } from './api-gateway.service';
 import { AuthModule } from './auth/auth.module';
 import { TaskModule } from './task/̉task.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { HttpCorrelationMiddleware, RabbitmqSetupModule, RedisModule } from '@app/shared';
 import { RedisThrottlerGuard } from './common/guards/redis-throttler.guard';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -26,6 +27,7 @@ const httpMetricProvider = makeHistogramProvider({
     ConfigModule.forRoot({ isGlobal: true, envFilePath: 'apps/api-gateway/.env' }),
     AuthModule,
     TaskModule,
+    AnalyticsModule,
     RabbitmqSetupModule,
     RedisModule
   ],

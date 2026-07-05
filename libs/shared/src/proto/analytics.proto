@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package analytics;
+
+service AnalyticsService {
+  rpc GetUserCounter (GetUserCounterRequest) returns (UserCounterResponse);
+}
+
+message GetUserCounterRequest {
+  string userId = 1;
+}
+
+message UserCounterResponse {
+  string userId = 1;
+  int32 taskCount = 2;
+}

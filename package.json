@@ -8,6 +8,7 @@
   "scripts": {
     "build": "nest build",
     "build:api-gateway": "nest build api-gateway",
+    "build:analytics-service": "nest build analytics-service",
     "build:auth-service": "nest build auth-service",
     "build:task-service": "nest build task-service",
     "build:notification-service": "nest build notification-service",
