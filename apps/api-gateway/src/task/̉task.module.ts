@@ -12,11 +12,11 @@ import { join } from 'path';
         name: 'TASK_SERVICE',
         imports: [ConfigModule],
         inject: [ConfigService],
-                useFactory: (config: ConfigService) => ({
+        useFactory: (config: ConfigService) => ({
           transport: Transport.GRPC,
           options: {
             package: 'task',
-            protoPath: join(__dirname, '../../../libs/shared/src/proto/task.proto'),
+            protoPath: join(process.cwd(), 'libs/shared/src/proto/task.proto'),
             url: config.get('TASK_SERVICE_GRPC_URL') || 'localhost:50052',
           },
         }),
@@ -26,4 +26,4 @@ import { join } from 'path';
   ],
   controllers: [TaskController],
 })
-export class TaskModule {}
+export class TaskModule { }

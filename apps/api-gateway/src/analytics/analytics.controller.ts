@@ -22,7 +22,10 @@ function toHttpStatus(err: any) {
 }
 
 @UseGuards(JwtAuthGuard)
-@Controller('analytics')
+@Controller({
+  path: 'analytics',
+  version: '1',
+})
 export class AnalyticsController implements OnModuleInit {
   private analyticsService!: AnalyticsServiceClient;
 

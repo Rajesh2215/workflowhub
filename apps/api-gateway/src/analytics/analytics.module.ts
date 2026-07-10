@@ -16,7 +16,7 @@ import { join } from 'path';
           transport: Transport.GRPC,
           options: {
             package: 'analytics',
-            protoPath: join(__dirname, '../../../libs/shared/src/proto/analytics.proto'),
+            protoPath: join(process.cwd(), 'libs/shared/src/proto/analytics.proto'),
             url: config.get('ANALYTICS_SERVICE_GRPC_URL') || 'localhost:50053',
           },
         }),
@@ -26,4 +26,4 @@ import { join } from 'path';
   ],
   controllers: [AnalyticsController],
 })
-export class AnalyticsModule {}
+export class AnalyticsModule { }

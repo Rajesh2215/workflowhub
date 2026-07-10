@@ -24,7 +24,10 @@ function toHttpStatus(err: any) {
 }
 
 @UseGuards(JwtAuthGuard)
-@Controller('task')
+@Controller({
+  path: 'task',
+  version: '1',
+})
 export class TaskController implements OnModuleInit {
   private taskService: TaskServiceClient;
 

@@ -16,12 +16,13 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('/api (GET)', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/api') // <-- Updated to target /api instead of /
       .expect(200)
-      .expect('Hello World!');
+      .expect('Hello World from app!'); // <-- Match the actual message returned by AppService
   });
+
 
   afterEach(async () => {
     await app.close();

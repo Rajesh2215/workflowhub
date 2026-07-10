@@ -9,7 +9,10 @@ interface AuthServiceClient {
   login(data: LoginDto, metadata?: any): any;
 }
 
-@Controller('auth')
+@Controller({
+  path: 'auth',
+  version: '1',
+})
 export class AuthController implements OnModuleInit {
   private authService: AuthServiceClient;
 
