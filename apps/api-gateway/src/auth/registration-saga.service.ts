@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Inject, Injectable, Logger, OnModuleInit } f
 import { ClientProxy } from "@nestjs/microservices";
 import type { ClientGrpc } from "@nestjs/microservices";
 import { firstValueFrom } from "rxjs";
-import { getGrpcMetadata } from "@app/shared";
+import { getGrpcMetadata, toHttpStatus, wrapWithCircuitbreaker } from "@app/shared";
 
 interface AuthServiceClient {
   register(data: any, metadata?: any): any;
@@ -28,8 +28,8 @@ export class RegistrationSagaService implements OnModuleInit {
   ) { }
 
   onModuleInit() {
-    this.authService = this.authClient.getService<AuthServiceClient>('AuthService');
-    this.taskService = this.taskClient.getService<TaskServiceClient>('TaskService');
+    this.authService = wrapWithCircuitbreaker(this.authClient.getService<AuthServiceClient>('AuthService'), 'AuthService');
+    this.taskService = wrapWithCircuitbreaker(this.taskClient.getService<TaskServiceClient>('TaskService'), 'TaskService');
   }
 
   async executeRegistrationSaga(registerDto: any) {
@@ -106,7 +106,7 @@ export class RegistrationSagaService implements OnModuleInit {
 
       throw new HttpException(
         error.message || 'User Registration failed',
-        error.statusCode || HttpStatus.INTERNAL_SERVER_ERROR
+        toHttpStatus(error) // <-- Maps circuit breaker/gRPC errors to HTTP status
       );
 
     }

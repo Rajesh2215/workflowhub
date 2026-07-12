@@ -2,25 +2,11 @@ import { JwtAuthGuard } from '@app/auth/jwt-auth.guard';
 import { Body, Controller, Get, HttpException, Inject, Post, Req, UseGuards, OnModuleInit } from '@nestjs/common';
 import type { ClientGrpc } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
-import { TaskDto, getGrpcMetadata } from '@app/shared';
+import { TaskDto, getGrpcMetadata, toHttpStatus, wrapWithCircuitbreaker } from '@app/shared';
 
 interface TaskServiceClient {
   createTask(data: any, metadata?: any): any;
   getTasks(data: { userId: string }, metadata?: any): any;
-}
-
-function toHttpStatus(err: any) {
-  if (err?.code) {
-    // Map common gRPC codes to HTTP status
-    switch (err.code) {
-      case 3: return 400; // INVALID_ARGUMENT
-      case 5: return 404; // NOT_FOUND
-      case 6: return 409; // ALREADY_EXISTS
-      case 16: return 401; // UNAUTHENTICATED
-    }
-  }
-  const status = Number(err?.statusCode ?? err?.status);
-  return Number.isInteger(status) ? status : 500;
 }
 
 @UseGuards(JwtAuthGuard)
@@ -37,7 +23,7 @@ export class TaskController implements OnModuleInit {
   ) { }
 
   onModuleInit() {
-    this.taskService = this.taskClient.getService<TaskServiceClient>('TaskService');
+    this.taskService = wrapWithCircuitbreaker(this.taskClient.getService<TaskServiceClient>('TaskService'), 'TaskService');
   }
 
   @Post('create')
@@ -46,7 +32,7 @@ export class TaskController implements OnModuleInit {
       .createTask({ ...body, userId: req.user.id }, getGrpcMetadata())
       .pipe(
         catchError((err) => {
-          console.log('🚀 ~ TaskController ~ create ~ err:', err);
+          console.log('🚀 ~ TaskController ~ create ~ err:', err?.message);
           throw new HttpException(
             err.details || err.message || 'Task Creation failed',
             toHttpStatus(err),
@@ -61,7 +47,7 @@ export class TaskController implements OnModuleInit {
       .getTasks({ userId: req.user.id }, getGrpcMetadata())
       .pipe(
         catchError((err) => {
-          console.log('🚀 ~ TaskController ~ getAll ~ err:', err);
+          console.log('🚀 ~ TaskController ~ getAll ~ err:', err?.message);
           throw new HttpException(
             err.details || err.message || 'Failed to fetch tasks',
             toHttpStatus(err),

@@ -20,3 +20,5 @@ export * from './logging/rpc-correlation.interceptor';
 export * from './logging/tracer';
 
 export * from './kafka/kafka.constants';
+
+export * from './circuit-breaker/circuit-breaker.helper';

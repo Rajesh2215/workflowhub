@@ -2,7 +2,7 @@ import { Body, Controller, HttpException, Inject, Post, OnModuleInit } from '@ne
 import type { ClientGrpc } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { RegistrationSagaService } from './registration-saga.service';
-import { RegisterDto, LoginDto, getGrpcMetadata } from '@app/shared'; // <-- Import DTOs and metadata helper
+import { RegisterDto, LoginDto, getGrpcMetadata, wrapWithCircuitbreaker, toHttpStatus } from '@app/shared'; // <-- Import DTOs and metadata helper
 
 interface AuthServiceClient {
   register(data: RegisterDto, metadata?: any): any;
@@ -23,17 +23,17 @@ export class AuthController implements OnModuleInit {
   ) { }
 
   onModuleInit() {
-    this.authService = this.authClient.getService<AuthServiceClient>('AuthService');
+    this.authService = wrapWithCircuitbreaker(this.authClient.getService<AuthServiceClient>('AuthService'), 'AuthService');
   }
 
   @Post('register')
   register(@Body() body: RegisterDto) {
     return this.authService.register(body, getGrpcMetadata()).pipe(
       catchError((err) => {
-        console.log('🚀 ~ AuthController ~ register ~ err:', err);
+        console.log('🚀 ~ AuthController ~ register ~ err:', err?.message);
         throw new HttpException(
           err.details || err.message || 'Authentication failed',
-          err.code === 6 ? 409 : (err.code === 3 ? 400 : 500),
+          toHttpStatus(err), // <-- Maps circuit breaker/gRPC errors to HTTP status
         );
       }),
     );
@@ -44,10 +44,10 @@ export class AuthController implements OnModuleInit {
   login(@Body() body: LoginDto) {
     return this.authService.login(body, getGrpcMetadata()).pipe(
       catchError((err) => {
-        console.log('🚀 ~ AuthController ~ login ~ err:', err);
+        console.log('🚀 ~ AuthController ~ login ~ err:', err?.message);
         throw new HttpException(
           err.details || err.message || 'Authentication failed',
-          err.code === 5 ? 404 : (err.code === 16 ? 401 : 500),
+          toHttpStatus(err), // <-- Maps circuit breaker/gRPC errors to HTTP status
         );
       }),
     );
