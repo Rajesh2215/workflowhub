@@ -6,11 +6,14 @@ import { TaskServiceController } from "./task.controller";
 import { ClientsModule, Transport } from "@nestjs/microservices";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { QUEUES, CorrelationIdClientRmq, KAFKA_CONFIG, KAFKA_TOPICS } from "@app/shared";
+import { Outbox, OutboxSchema } from "../schemas/outbox.schema";
+import { OutboxPollerService } from "./outbox-poller.service";
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: Task.name, schema: TaskSchema }
+      { name: Task.name, schema: TaskSchema },
+      { name: Outbox.name, schema: OutboxSchema }
     ]),
     ClientsModule.registerAsync([
       {
@@ -52,7 +55,7 @@ import { QUEUES, CorrelationIdClientRmq, KAFKA_CONFIG, KAFKA_TOPICS } from "@app
     ]),
   ],
   controllers: [TaskServiceController],
-  providers: [TaskServiceService],
+  providers: [TaskServiceService, OutboxPollerService],
   exports: [TaskServiceService],
 })
 export class TaskModule { }

@@ -1,45 +1,66 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { Inject, Injectable } from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Task, TaskDocument } from '../schemas/task.schema';
-import { Model } from 'mongoose';
+import { Connection, Model } from 'mongoose';
 import { ClientKafka, ClientProxy, RpcException } from '@nestjs/microservices';
 import { KAFKA_TOPICS } from '@app/shared';
+import { Outbox, OutboxDocument, OutboxStatus } from '../schemas/outbox.schema';
 
 @Injectable()
-export class TaskServiceService implements OnModuleInit {
+export class TaskServiceService {
   constructor(
     @InjectModel(Task.name)
     private taskModel: Model<TaskDocument>,
 
+    @InjectModel(Outbox.name)
+    private outboxModel: Model<OutboxDocument>,
+
+    @InjectConnection()
+    private readonly connection: Connection,
+
     @Inject('NOTIFICATION_SERVICE')
     private readonly notificationClient: ClientProxy,
 
-    @Inject('KAFKA_SERVICE')
-    private readonly kafkaClient: ClientKafka,
-
   ) { }
 
-  async onModuleInit() {
-    // Connects to Kafka during the bootstrap process
-    await this.kafkaClient.connect();
-  }
-
-
   async create(body) {
-    const task = await this.taskModel.create(body);
 
-    this.kafkaClient.emit(KAFKA_TOPICS.TASK_CREATED, {
-      userId: body.userId,
-      taskId: task._id,
-      title: task.title,
-      message: "Task Created Successfully",
-      type: "EMAIL"
-    })
+    const session = await this.connection.startSession();
+    session.startTransaction();
 
-    return {
-      message: 'Task created successfully',
-      task,
-    };
+    try {
+      // Note: Mongoose requires an array of payloads when a session is supplied
+      const [task] = await this.taskModel.create([body], { session });
+      await this.outboxModel.create([
+        {
+          pattern: KAFKA_TOPICS.TASK_CREATED,
+          payload: {
+            userId: body.userId,
+            taskId: task._id.toString(),
+            title: task.title,
+            message: 'Task Created Successfully',
+            type: 'EMAIL',
+          },
+          status: OutboxStatus.PENDING,
+          attempts: 0,
+        }
+      ], { session });
+
+      await session.commitTransaction();
+      return {
+        message: 'Task created successfully',
+        task,
+      };
+    } catch (error) {
+      await session.abortTransaction();
+      throw new RpcException({
+        statusCode: 400,
+        message: `Task creation transaction failed: ${error.message}`,
+      });
+    } finally {
+      // 7. End the session to clean up database connections
+      await session.endSession();
+    }
   }
 
   async findAllByUserId(userId: string) {
