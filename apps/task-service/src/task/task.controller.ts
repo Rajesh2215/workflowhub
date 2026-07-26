@@ -1,6 +1,6 @@
 import { Controller, Logger } from '@nestjs/common';
 import { TaskServiceService } from './task.service';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcMethod, MessagePattern } from '@nestjs/microservices';
 import { TaskDto } from '@app/shared';
 
 @Controller('task')
@@ -22,23 +22,9 @@ export class TaskServiceController {
     };
   }
 
-  @GrpcMethod('TaskService', 'GetTasks')
-  async grpcGetTasks(data: { userId: string }) {
-    this.logger.log(`[gRPC] Getting tasks for user: ${data.userId}`);
-    const result = await this.taskService.findAllByUserId(data.userId);
-    this.logger.log(`[gRPC] Found ${result.tasks?.length} tasks in DB`);
-    const mappedTasks = result.tasks.map((task) => ({
-      id: task._id.toString(),
-      title: task.title || '',
-      description: task.description || '',
-      userId: task.userId || '',
-      message: '',
-    }));
-    this.logger.log(`[gRPC] Mapped tasks: ${JSON.stringify(mappedTasks)}`);
-    return {
-      message: result.message,
-      tasks: mappedTasks,
-    };
+  @MessagePattern('task.findAllByUserId')
+  findAllByUserId(body: { userId: string }) {
+    return this.taskService.findAllByUserId(body.userId);
   }
 
   @GrpcMethod('TaskService', 'CreateSaga')

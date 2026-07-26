@@ -26,6 +26,12 @@ async function bootstrap() {
     }),
   );
 
+  const corsOrigins = process.env.CORS_ORIGIN ?? process.env.FRONTEND_URL ?? '*';
+  app.enableCors({
+    origin: corsOrigins === '*' ? true : corsOrigins.split(',').map((origin) => origin.trim()),
+    credentials: true,
+  });
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

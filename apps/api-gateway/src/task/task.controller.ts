@@ -1,6 +1,6 @@
 import { JwtAuthGuard } from '@app/auth/jwt-auth.guard';
 import { Body, Controller, Get, HttpException, Inject, Post, Req, UseGuards, OnModuleInit } from '@nestjs/common';
-import type { ClientGrpc } from '@nestjs/microservices';
+import type { ClientGrpc, ClientProxy } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { TaskDto, getGrpcMetadata, toHttpStatus, wrapWithCircuitbreaker } from '@app/shared';
 
@@ -19,7 +19,7 @@ export class TaskController implements OnModuleInit {
 
   constructor(
     @Inject('TASK_SERVICE')
-    private readonly taskClient: ClientGrpc,
+    private readonly taskClient: ClientGrpc & ClientProxy,
   ) { }
 
   onModuleInit() {
@@ -43,13 +43,13 @@ export class TaskController implements OnModuleInit {
 
   @Get('all')
   getAll(@Req() req: any) {
-    return this.taskService
-      .getTasks({ userId: req.user.id }, getGrpcMetadata())
+    return this.taskClient
+      .send('task.findAllByUserId', { userId: req.user.id })
       .pipe(
         catchError((err) => {
-          console.log('🚀 ~ TaskController ~ getAll ~ err:', err?.message);
+          console.log('🚀 ~ TaskController ~ getAll ~ err:', err);
           throw new HttpException(
-            err.details || err.message || 'Failed to fetch tasks',
+            err.message || 'Failed to fetch tasks',
             toHttpStatus(err),
           );
         }),
