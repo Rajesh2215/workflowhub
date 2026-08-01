@@ -1,0 +1,44 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/your-org/task-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+config:
+  NODE_ENV: production
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
+  KAFKA_BROKERS: "kafka:9093"
+
+secret:
+  RABBITMQ_URL: ""
+  MONGO_URI: ""
+
+resources:
+  requests:
+    cpu: 100m
+  limits:
+    cpu: 500m
+
+probes:
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  liveness:
+    initialDelaySeconds: 15
+    periodSeconds: 20
+    timeoutSeconds: 3
+    failureThreshold: 3
+  startup:
+    periodSeconds: 5
+    failureThreshold: 12
+
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  averageUtilization: 60

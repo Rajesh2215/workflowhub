@@ -1,0 +1,56 @@
+apiVersion: v2
+name: workflowhub
+description: Umbrella Helm chart for the Workflowhub stack
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+dependencies:
+  - name: rabbitmq
+    alias: rabbitmq
+    version: 0.1.0
+    repository: file://../rabbitmq
+  - name: mongo-auth
+    alias: mongoAuth
+    version: 0.1.0
+    repository: file://../mongo-auth
+  - name: mongo-task
+    alias: mongoTask
+    version: 0.1.0
+    repository: file://../mongo-task
+  - name: mongo-notification
+    alias: mongoNotification
+    version: 0.1.0
+    repository: file://../mongo-notification
+  - name: api-gateway
+    alias: apiGateway
+    version: 0.1.0
+    repository: file://../api-gateway
+  - name: auth-service
+    alias: authService
+    version: 0.1.0
+    repository: file://../auth-service
+  - name: task-service
+    alias: taskService
+    version: 0.1.0
+    repository: file://../task-service
+  - name: notification-service
+    alias: notificationService
+    version: 0.1.0
+    repository: file://../notification-service
+  - name: mongo-analytics
+    alias: mongoAnalytics
+    version: 0.1.0
+    repository: file://../mongo-analytics
+  - name: analytics-service
+    alias: analyticsService
+    version: 0.1.0
+    repository: file://../analytics-service
+  - name: kafka
+    alias: kafka
+    version: 0.1.0
+    repository: file://../kafka
+  - name: redis
+    alias: redis
+    version: 0.1.0
+    repository: file://../redis

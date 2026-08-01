@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  repository: mongo
+  tag: "7"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 27017
+
+storage:
+  size: 1Gi
+  className: ""
+
+probes:
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  liveness:
+    initialDelaySeconds: 15
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 3
+  startup:
+    periodSeconds: 5
+    failureThreshold: 12

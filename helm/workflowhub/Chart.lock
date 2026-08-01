@@ -1,0 +1,27 @@
+dependencies:
+- name: rabbitmq
+  repository: file://../rabbitmq
+  version: 0.1.0
+- name: mongo-auth
+  repository: file://../mongo-auth
+  version: 0.1.0
+- name: mongo-task
+  repository: file://../mongo-task
+  version: 0.1.0
+- name: mongo-notification
+  repository: file://../mongo-notification
+  version: 0.1.0
+- name: api-gateway
+  repository: file://../api-gateway
+  version: 0.1.0
+- name: auth-service
+  repository: file://../auth-service
+  version: 0.1.0
+- name: task-service
+  repository: file://../task-service
+  version: 0.1.0
+- name: notification-service
+  repository: file://../notification-service
+  version: 0.1.0
+digest: sha256:aa056bfe01b2b8ba8e16a127b5c08fbc93a8d0b828ea4dcae4198e73066559a6
+generated: "2026-07-01T14:51:37.510799+05:30"

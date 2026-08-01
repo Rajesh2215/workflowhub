@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "analytics-service.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+data:
+  NODE_ENV: {{ .Values.config.NODE_ENV | quote }}
+  REDIS_HOST: {{ .Values.config.REDIS_HOST | quote }}
+  REDIS_PORT: {{ .Values.config.REDIS_PORT | quote }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.config.OTEL_EXPORTER_OTLP_ENDPOINT | quote }}
+  KAFKA_BROKERS: {{ .Values.config.KAFKA_BROKERS | quote }}

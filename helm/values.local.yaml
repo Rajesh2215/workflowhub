@@ -1,0 +1,52 @@
+# Overrides for local Minikube deployment
+
+rabbitmq:
+  auth:
+    username: 'workflowhub'
+    password: 'workflowhub'
+
+apiGateway:
+  image:
+    repository: api-gateway
+    tag: latest
+    pullPolicy: Never
+  secret:
+    RABBITMQ_URL: 'amqp://workflowhub:workflowhub@rabbitmq:5672'
+    JWT_SECRET: 'workflowhub@123'
+
+authService:
+  image:
+    repository: auth-service
+    tag: latest
+    pullPolicy: Never
+  secret:
+    RABBITMQ_URL: 'amqp://workflowhub:workflowhub@rabbitmq:5672'
+    MONGO_URI: 'mongodb://mongo-auth:27017/auth'
+    JWT_SECRET: 'workflowhub@123'
+
+taskService:
+  image:
+    repository: task-service
+    tag: latest
+    pullPolicy: Never
+  secret:
+    RABBITMQ_URL: 'amqp://workflowhub:workflowhub@rabbitmq:5672'
+    MONGO_URI: 'mongodb://mongo-task:27017/task'
+
+notificationService:
+  image:
+    repository: notification-service
+    tag: latest
+    pullPolicy: Never
+  secret:
+    RABBITMQ_URL: 'amqp://workflowhub:workflowhub@rabbitmq:5672'
+    MONGO_URI: 'mongodb://mongo-notification:27017/notification'
+
+analyticsService:
+  image:
+    repository: analytics-service
+    tag: latest
+    pullPolicy: Never
+  secret:
+    RABBITMQ_URL: 'amqp://workflowhub:workflowhub@rabbitmq:5672'
+    MONGO_URI: 'mongodb://mongo-analytics:27017/analytics'

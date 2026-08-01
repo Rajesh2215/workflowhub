@@ -1,0 +1,41 @@
+name: Deploy Stack to Kubernetes
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Select environment based on branch
+    environment: ${{ github.ref_name == 'main' && 'main' || 'dev' }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Package Helm Dependencies
+        run: helm dependency update ./helm/workflowhub
+
+      - name: Deploy via Helm
+        run: |
+          helm upgrade --install workflowhub ./helm/workflowhub \
+            --namespace workflowhub --create-namespace \
+            --set rabbitmq.auth.username="${{ secrets.RABBITMQ_USER }}" \
+            --set rabbitmq.auth.password="${{ secrets.RABBITMQ_PASS }}" \
+            --set apiGateway.secret.JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            --set apiGateway.secret.RABBITMQ_URL="${{ secrets.RABBITMQ_URL }}" \
+            --set authService.secret.JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            --set authService.secret.MONGO_URI="${{ secrets.MONGO_URI_AUTH }}" \
+            --set authService.secret.RABBITMQ_URL="${{ secrets.RABBITMQ_URL }}" \
+            --set taskService.secret.MONGO_URI="${{ secrets.MONGO_URI_TASK }}" \
+            --set taskService.secret.RABBITMQ_URL="${{ secrets.RABBITMQ_URL }}" \
+            --set notificationService.secret.MONGO_URI="${{ secrets.MONGO_URI_NOTIFICATION }}" \
+            --set notificationService.secret.RABBITMQ_URL="${{ secrets.RABBITMQ_URL }}" \
+            --set analyticsService.secret.MONGO_URI="${{ secrets.MONGO_URI_ANALYTICS }}" \
+            --set analyticsService.secret.RABBITMQ_URL="${{ secrets.RABBITMQ_URL }}"

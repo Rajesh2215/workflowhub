@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "task-service.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+data:
+  NODE_ENV: {{ .Values.config.NODE_ENV | quote }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.config.OTEL_EXPORTER_OTLP_ENDPOINT | quote }}
+  KAFKA_BROKERS: {{ .Values.config.KAFKA_BROKERS | quote }}

@@ -1,0 +1,30 @@
+replicaCount: 1
+
+image:
+  repository: rabbitmq
+  tag: 3-management
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  amqpPort: 5672
+  managementPort: 15672
+
+auth:
+  username: ""
+  password: ""
+
+probes:
+  readiness:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  liveness:
+    initialDelaySeconds: 20
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 3
+  startup:
+    periodSeconds: 5
+    failureThreshold: 24

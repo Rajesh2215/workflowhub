@@ -55,3 +55,11 @@ pids
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 notes
+notes/
+/notes/
+
+
+# Helm local values and packaged dependencies
+helm/values.local.yaml
+helm/values.prod.yaml
+helm/workflowhub/charts/*.tgz

@@ -1,0 +1,90 @@
+rabbitmq:
+  auth:
+    username: "workflowhub"
+    password: "workflowhub"
+
+mongoAuth:
+  storage:
+    className: ""
+
+mongoTask:
+  storage:
+    className: ""
+
+mongoNotification:
+  storage:
+    className: ""
+
+apiGateway:
+  image:
+    repository: ghcr.io/your-org/api-gateway
+    tag: latest
+    pullPolicy: IfNotPresent
+  imagePullSecrets:
+    - name: ghcr-secret
+  ingress:
+    enabled: true
+    className: nginx
+    host: workflowhub.test
+    path: /
+    pathType: Prefix
+    annotations: {}
+    tls: []
+  secret:
+    RABBITMQ_URL: ""
+    JWT_SECRET: ""
+
+authService:
+  image:
+    repository: ghcr.io/your-org/auth-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  imagePullSecrets:
+    - name: ghcr-secret
+  secret:
+    RABBITMQ_URL: ""
+    MONGO_URI: ""
+    JWT_SECRET: ""
+
+taskService:
+  image:
+    repository: ghcr.io/your-org/task-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  imagePullSecrets:
+    - name: ghcr-secret
+  secret:
+    RABBITMQ_URL: ""
+    MONGO_URI: ""
+
+notificationService:
+  image:
+    repository: ghcr.io/your-org/notification-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  imagePullSecrets:
+    - name: ghcr-secret
+  secret:
+    RABBITMQ_URL: ""
+    MONGO_URI: ""
+
+mongoAnalytics:
+  storage:
+    className: ""
+
+analyticsService:
+  image:
+    repository: ghcr.io/your-org/analytics-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  imagePullSecrets:
+    - name: ghcr-secret
+  config:
+    NODE_ENV: production
+    REDIS_HOST: redis
+    REDIS_PORT: "6379"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
+    KAFKA_BROKERS: "kafka:9093"
+  secret:
+    RABBITMQ_URL: ""
+    MONGO_URI: ""
