@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+
+kind: Deployment
+
+metadata:
+  name: task-service
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: task-service
+  template:
+    metadata:
+      labels:
+        app: task-service
+    spec:
+      containers:
+        - name: task-service
+          image: task-service
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: task-service-config
+            - secretRef:
+                name: task-service-secret
+          readinessProbe:
+            exec:
+              command:
+                - node
+                - /app/scripts/check-rabbitmq.js
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - readlink /proc/1/exe | grep -q node
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            exec:
+              command:
+                - node
+                - /app/scripts/check-rabbitmq.js
+            periodSeconds: 5
+            failureThreshold: 12

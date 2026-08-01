@@ -1,0 +1,61 @@
+# Deployment lives in the apps API group, so Kubernetes expects apps/v1
+apiVersion: apps/v1
+
+kind: Deployment
+
+metadata:
+  name: api-gateway
+
+spec:
+# Kubernetes should keep 1 pod running.
+  replicas: 1
+
+# Tells the Deployment which pods belong to it.
+  selector:
+    matchLabels:
+      app: api-gateway
+
+# The pod blueprint Kubernetes will use to create pods.
+  template:
+    metadata:
+      # These must match the selector above, or the Deployment won't manage the pod correctly.
+      labels:
+        app: api-gateway
+
+    spec:
+      # List of containers that run inside the pod.
+      containers:
+        - name: api-gateway
+          image: api-gateway
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: api-gateway-config
+            - secretRef:
+                name: api-gateway-secret
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 5
+            failureThreshold: 12

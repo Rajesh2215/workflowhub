@@ -1,0 +1,22 @@
+# Note - This file is for only creating a Pod and for learning purpose only
+# - means list item
+# Why image, imagePullPolicy, containerPort do not have -
+# Because those are fields inside one list item, not separate items in a list.
+# metadata - Usually the name of pod
+
+apiVersion: v1
+
+kind: Pod
+
+metadata:
+  name: api-gateway
+  labels:
+    app: api-gateway
+
+spec:
+  containers:
+    - name: api-gateway
+      image: api-gateway
+      imagePullPolicy: Never
+      ports:
+        - containerPort: 3000

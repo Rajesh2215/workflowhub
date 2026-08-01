@@ -10,6 +10,7 @@ COPY nest-cli.json ./
 
 COPY apps ./apps
 COPY libs ./libs
+COPY scripts ./scripts
 
 RUN npm install
 
@@ -30,6 +31,7 @@ RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 
 COPY --from=builder /app/libs ./libs
+COPY --from=builder /app/scripts ./scripts
 
 ENV NODE_ENV=production
 
