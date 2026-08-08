@@ -18,12 +18,12 @@ spec:
   {{- end }}
   rules:
     - http:
-      paths:
-        - path: {{ .Values.ingress.path | quote }}
-          pathType: {{ .Values.ingress.pathType }}
-          backend:
-            service:
-              name: {{ include "api-gateway.fullname" . }}
-              port:
-                number: {{ .Values.service.port }}
+        paths:
+          - path: {{ .Values.ingress.path | quote }}
+            pathType: {{ .Values.ingress.pathType }}
+            backend:
+              service:
+                name: {{ include "api-gateway.fullname" . }}
+                port:
+                  number: {{ .Values.service.port }}
 {{- end }}
