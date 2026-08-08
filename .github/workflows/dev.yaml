@@ -55,7 +55,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest
 
 
-    deploy:
+  deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
     needs: build-and-push
