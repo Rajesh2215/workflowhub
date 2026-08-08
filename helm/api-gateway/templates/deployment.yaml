@@ -37,7 +37,7 @@ spec:
                 name: {{ include "api-gateway.fullname" . }}-secret
           readinessProbe:
             httpGet:
-              path: /health
+              path: /api/health
               port: 3000
             initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
             periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
@@ -45,7 +45,7 @@ spec:
             failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
           livenessProbe:
             httpGet:
-              path: /health
+              path: /api/health
               port: 3000
             initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
             periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
@@ -53,7 +53,7 @@ spec:
             failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
           startupProbe:
             httpGet:
-              path: /health
+              path: /api/health
               port: 3000
             periodSeconds: {{ .Values.probes.startup.periodSeconds }}
             failureThreshold: {{ .Values.probes.startup.failureThreshold }}

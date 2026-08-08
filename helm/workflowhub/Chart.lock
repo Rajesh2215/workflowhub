@@ -23,5 +23,17 @@ dependencies:
 - name: notification-service
   repository: file://../notification-service
   version: 0.1.0
-digest: sha256:aa056bfe01b2b8ba8e16a127b5c08fbc93a8d0b828ea4dcae4198e73066559a6
-generated: "2026-07-01T14:51:37.510799+05:30"
+- name: mongo-analytics
+  repository: file://../mongo-analytics
+  version: 0.1.0
+- name: analytics-service
+  repository: file://../analytics-service
+  version: 0.1.0
+- name: kafka
+  repository: file://../kafka
+  version: 0.1.0
+- name: redis
+  repository: file://../redis
+  version: 0.1.0
+digest: sha256:38bdef717f7eb0e1b6d4f213063eaf5f4fe2f2c3232d5f740b8cfe3cea0f35db
+generated: "2026-08-01T15:24:43.291427+05:30"
