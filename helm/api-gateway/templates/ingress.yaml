@@ -17,14 +17,13 @@ spec:
 {{ toYaml .Values.ingress.tls | indent 4 }}
   {{- end }}
   rules:
-    - host: {{ .Values.ingress.host | quote }}
-      http:
-        paths:
-          - path: {{ .Values.ingress.path | quote }}
-            pathType: {{ .Values.ingress.pathType }}
-            backend:
-              service:
-                name: {{ include "api-gateway.fullname" . }}
-                port:
-                  number: {{ .Values.service.port }}
+    - http:
+      paths:
+        - path: {{ .Values.ingress.path | quote }}
+          pathType: {{ .Values.ingress.pathType }}
+          backend:
+            service:
+              name: {{ include "api-gateway.fullname" . }}
+              port:
+                number: {{ .Values.service.port }}
 {{- end }}
