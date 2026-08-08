@@ -17,7 +17,7 @@ mongoNotification:
 
 apiGateway:
   image:
-    repository: ghcr.io/your-org/api-gateway
+    repository: ghcr.io/rajesh2215/workflowhub/api-gateway
     tag: latest
     pullPolicy: IfNotPresent
   imagePullSecrets:
@@ -36,7 +36,7 @@ apiGateway:
 
 authService:
   image:
-    repository: ghcr.io/your-org/auth-service
+    repository: ghcr.io/rajesh2215/workflowhub/auth-service
     tag: latest
     pullPolicy: IfNotPresent
   imagePullSecrets:
@@ -48,7 +48,7 @@ authService:
 
 taskService:
   image:
-    repository: ghcr.io/your-org/task-service
+    repository: ghcr.io/rajesh2215/workflowhub/task-service
     tag: latest
     pullPolicy: IfNotPresent
   imagePullSecrets:
@@ -59,7 +59,7 @@ taskService:
 
 notificationService:
   image:
-    repository: ghcr.io/your-org/notification-service
+    repository: ghcr.io/rajesh2215/workflowhub/notification-service
     tag: latest
     pullPolicy: IfNotPresent
   imagePullSecrets:
@@ -74,7 +74,7 @@ mongoAnalytics:
 
 analyticsService:
   image:
-    repository: ghcr.io/your-org/analytics-service
+    repository: ghcr.io/rajesh2215/workflowhub/analytics-service
     tag: latest
     pullPolicy: IfNotPresent
   imagePullSecrets:
