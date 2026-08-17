@@ -26,4 +26,5 @@ probes:
     failureThreshold: 3
   startup:
     periodSeconds: 5
+    timeoutSeconds: 5
     failureThreshold: 12
