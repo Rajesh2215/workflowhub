@@ -21,6 +21,14 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
 
+    env:
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      RABBITMQ_URL: ${{ secrets.RABBITMQ_URL }}
+      MONGO_URI_AUTH: ${{ secrets.MONGO_URI_AUTH }}
+      MONGO_URI_TASK: ${{ secrets.MONGO_URI_TASK }}
+      MONGO_URI_NOTIFICATION: ${{ secrets.MONGO_URI_NOTIFICATION }}
+      MONGO_URI_ANALYTICS: ${{ secrets.MONGO_URI_ANALYTICS }}
+
     steps:
 
       # -----------------------------------
