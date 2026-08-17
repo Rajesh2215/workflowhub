@@ -147,7 +147,6 @@ jobs:
             --set mongoTask.storage.className=gp2 \
             --set mongoNotification.storage.className=gp2 \
             --set mongoAnalytics.storage.className=gp2 \
-            --set apiGateway.ingress.enabled=false \
             --set-string apiGateway.secret.RABBITMQ_URL="$RABBITMQ_URL" \
             --set-string apiGateway.secret.JWT_SECRET="$JWT_SECRET" \
             --set-string authService.secret.RABBITMQ_URL="$RABBITMQ_URL" \
