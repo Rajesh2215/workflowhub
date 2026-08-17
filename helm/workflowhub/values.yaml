@@ -24,7 +24,7 @@ apiGateway:
     - name: ghcr-secret
   ingress:
     enabled: true
-    className: nginx
+    className: alb
     host: workflowhub.test
     path: /
     pathType: Prefix
