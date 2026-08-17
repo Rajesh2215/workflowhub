@@ -1,0 +1,176 @@
+name: Deploy WorkflowHub - Dev
+
+on:
+  push:
+    branches:
+      - dev
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: ap-south-1
+  EKS_CLUSTER_NAME: workflowhub-eks
+  ECR_REGISTRY: 783308782610.dkr.ecr.ap-south-1.amazonaws.com
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  deploy:
+    name: Build and Deploy to Dev
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+
+      # -----------------------------------
+      # 1. Checkout
+      # -----------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # -----------------------------------
+      # 2. Configure AWS using OIDC
+      # -----------------------------------
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::783308782610:role/workflowhub-github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      # -----------------------------------
+      # 3. Login to ECR
+      # -----------------------------------
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # -----------------------------------
+      # 4. Build and push API Gateway
+      # -----------------------------------
+      - name: Build and push api-gateway
+        run: |
+          docker build \
+            -t $ECR_REGISTRY/workflowhub/api-gateway:$IMAGE_TAG \
+            -f apps/api-gateway/Dockerfile .
+
+          docker push \
+            $ECR_REGISTRY/workflowhub/api-gateway:$IMAGE_TAG
+
+      # -----------------------------------
+      # 5. Build and push Auth Service
+      # -----------------------------------
+      - name: Build and push auth-service
+        run: |
+          docker build \
+            -t $ECR_REGISTRY/workflowhub/auth-service:$IMAGE_TAG \
+            -f apps/auth-service/Dockerfile .
+
+          docker push \
+            $ECR_REGISTRY/workflowhub/auth-service:$IMAGE_TAG
+
+      # -----------------------------------
+      # 6. Build and push Task Service
+      # -----------------------------------
+      - name: Build and push task-service
+        run: |
+          docker build \
+            -t $ECR_REGISTRY/workflowhub/task-service:$IMAGE_TAG \
+            -f apps/task-service/Dockerfile .
+
+          docker push \
+            $ECR_REGISTRY/workflowhub/task-service:$IMAGE_TAG
+
+      # -----------------------------------
+      # 7. Build and push Notification Service
+      # -----------------------------------
+      - name: Build and push notification-service
+        run: |
+          docker build \
+            -t $ECR_REGISTRY/workflowhub/notification-service:$IMAGE_TAG \
+            -f apps/notification-service/Dockerfile .
+
+          docker push \
+            $ECR_REGISTRY/workflowhub/notification-service:$IMAGE_TAG
+
+      # -----------------------------------
+      # 8. Build and push Analytics Service
+      # -----------------------------------
+      - name: Build and push analytics-service
+        run: |
+          docker build \
+            -t $ECR_REGISTRY/workflowhub/analytics-service:$IMAGE_TAG \
+            -f apps/analytics-service/Dockerfile .
+
+          docker push \
+            $ECR_REGISTRY/workflowhub/analytics-service:$IMAGE_TAG
+
+      # -----------------------------------
+      # 9. Configure kubectl for EKS
+      # -----------------------------------
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name $EKS_CLUSTER_NAME
+
+      # -----------------------------------
+      # 10. Deploy using Helm
+      # -----------------------------------
+      - name: Deploy to EKS
+        run: |
+          helm upgrade --install workflowhub ./helm/workflowhub \
+            --namespace workflowhub \
+            --create-namespace \
+            --set apiGateway.image.repository=$ECR_REGISTRY/workflowhub/api-gateway \
+            --set apiGateway.image.tag=$IMAGE_TAG \
+            --set authService.image.repository=$ECR_REGISTRY/workflowhub/auth-service \
+            --set authService.image.tag=$IMAGE_TAG \
+            --set taskService.image.repository=$ECR_REGISTRY/workflowhub/task-service \
+            --set taskService.image.tag=$IMAGE_TAG \
+            --set notificationService.image.repository=$ECR_REGISTRY/workflowhub/notification-service \
+            --set notificationService.image.tag=$IMAGE_TAG \
+            --set analyticsService.image.repository=$ECR_REGISTRY/workflowhub/analytics-service \
+            --set analyticsService.image.tag=$IMAGE_TAG \
+            --set mongoAuth.storage.className=gp2 \
+            --set mongoTask.storage.className=gp2 \
+            --set mongoNotification.storage.className=gp2 \
+            --set mongoAnalytics.storage.className=gp2 \
+            --set apiGateway.ingress.enabled=false \
+            --set-string apiGateway.secret.RABBITMQ_URL="$RABBITMQ_URL" \
+            --set-string apiGateway.secret.JWT_SECRET="$JWT_SECRET" \
+            --set-string authService.secret.RABBITMQ_URL="$RABBITMQ_URL" \
+            --set-string authService.secret.MONGO_URI="$MONGO_URI_AUTH" \
+            --set-string authService.secret.JWT_SECRET="$JWT_SECRET" \
+            --set-string taskService.secret.RABBITMQ_URL="$RABBITMQ_URL" \
+            --set-string taskService.secret.MONGO_URI="$MONGO_URI_TASK" \
+            --set-string notificationService.secret.RABBITMQ_URL="$RABBITMQ_URL" \
+            --set-string notificationService.secret.MONGO_URI="$MONGO_URI_NOTIFICATION" \
+            --set-string analyticsService.secret.RABBITMQ_URL="$RABBITMQ_URL" \
+            --set-string analyticsService.secret.MONGO_URI="$MONGO_URI_ANALYTICS"
+
+      # -----------------------------------
+      # 11. Verify deployment
+      # -----------------------------------
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n workflowhub
+
+          kubectl rollout status deployment/api-gateway \
+            -n workflowhub \
+            --timeout=5m
+
+          kubectl rollout status deployment/auth-service \
+            -n workflowhub \
+            --timeout=5m
+
+          kubectl rollout status deployment/task-service \
+            -n workflowhub \
+            --timeout=5m
+
+          kubectl rollout status deployment/notification-service \
+            -n workflowhub \
+            --timeout=5m
+
+          kubectl rollout status deployment/analytics-service \
+            -n workflowhub \
+            --timeout=5m
