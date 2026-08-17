@@ -116,6 +116,10 @@ jobs:
       # -----------------------------------
       # 10. Deploy using Helm
       # -----------------------------------
+      - name: Build Helm dependencies
+        run: |
+          helm dependency build ./helm/workflowhub
+
       - name: Deploy to EKS
         run: |
           helm upgrade --install workflowhub ./helm/workflowhub \
