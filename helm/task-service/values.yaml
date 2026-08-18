@@ -1,5 +1,10 @@
 replicaCount: 1
 
+service:
+  type: ClusterIP
+  port: 50052
+  targetPort: 50052
+
 image:
   repository: ghcr.io/your-org/task-service
   tag: latest
