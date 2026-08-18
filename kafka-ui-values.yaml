@@ -1,0 +1,9 @@
+yamlApplicationConfig:
+  kafka:
+    clusters:
+      - name: workflowhub-kafka
+        bootstrapServers: kafka:9093
+
+service:
+  type: ClusterIP
+  port: 8080

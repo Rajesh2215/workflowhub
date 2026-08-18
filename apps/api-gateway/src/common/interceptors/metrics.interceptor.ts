@@ -26,7 +26,12 @@ export class MetricsInterceptor {
     return next.handle().pipe(
       tap(() => {
         const duration = (Date.now() - start) / 1000;
-        const route = request.route ? request.route.path : request.url;
+        // Use the normalized route pattern to avoid high-cardinality Prometheus labels.
+        // Fall back to controller/handler names instead of request.url, which may contain dynamic IDs.
+
+        const route =
+          request.route?.path ||
+          `${context.getClass().name}.${context.getHandler().name}`;
 
         this.histogram.observe(
           {

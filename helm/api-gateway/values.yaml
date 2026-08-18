@@ -68,3 +68,8 @@ hpa:
   minReplicas: 1
   maxReplicas: 5
   averageUtilization: 60
+
+metrics:
+  enabled: true
+  path: /api/metrics
+  interval: 15s
