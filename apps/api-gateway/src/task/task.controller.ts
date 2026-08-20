@@ -42,7 +42,7 @@ export class TaskController implements OnModuleInit {
       );
   }
 
-  @Throttle(10000, 60)
+  @Throttle(40000, 60)
   @Get('all')
   getAll(@Req() req: any) {
     return this.taskService
