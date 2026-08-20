@@ -43,8 +43,8 @@ export class TaskController implements OnModuleInit {
 
   @Get('all')
   getAll(@Req() req: any) {
-    return this.taskService
-      .getTasks({ userId: req.user.id }, getGrpcMetadata())
+    return this.taskClient
+      .send('task.findAllByUserId', { userId: req.user.id })
       .pipe(
         catchError((err) => {
           console.log('🚀 ~ TaskController ~ getAll ~ err:', err);
