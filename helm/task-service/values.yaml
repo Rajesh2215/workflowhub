@@ -16,6 +16,7 @@ config:
   NODE_ENV: production
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
   KAFKA_BROKERS: "kafka:9093"
+  MONGO_MAX_POOL_SIZE: "50"
 
 secret:
   RABBITMQ_URL: ""

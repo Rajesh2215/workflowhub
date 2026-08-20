@@ -64,7 +64,10 @@ export class TaskServiceService {
   }
 
   async findAllByUserId(userId: string) {
-    const tasks = await this.taskModel.find({ userId });
+    // .lean() returns plain JS objects instead of full Mongoose Document instances.
+    // This skips hydration and change-tracking overhead, reducing per-call CPU cost.
+    // The gRPC handler maps fields explicitly so plain objects work identically.
+    const tasks = await this.taskModel.find({ userId }).lean();
 
     return {
       message: 'Tasks fetched successfully',

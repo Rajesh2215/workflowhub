@@ -15,3 +15,7 @@ export class Task {
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task)
+
+// Index for the primary query pattern: find tasks by userId
+// Matches the exact query in findAllByUserId: taskModel.find({ userId })
+TaskSchema.index({ userId: 1 })

@@ -7,3 +7,4 @@ data:
   NODE_ENV: {{ .Values.config.NODE_ENV | quote }}
   OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.config.OTEL_EXPORTER_OTLP_ENDPOINT | quote }}
   KAFKA_BROKERS: {{ .Values.config.KAFKA_BROKERS | quote }}
+  MONGO_MAX_POOL_SIZE: {{ .Values.config.MONGO_MAX_POOL_SIZE | quote }}
