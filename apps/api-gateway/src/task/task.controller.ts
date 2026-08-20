@@ -43,13 +43,13 @@ export class TaskController implements OnModuleInit {
 
   @Get('all')
   getAll(@Req() req: any) {
-    return this.taskClient
-      .send('task.findAllByUserId', { userId: req.user.id })
+    return this.taskService
+      .getTasks({ userId: req.user.id }, getGrpcMetadata())
       .pipe(
         catchError((err) => {
           console.log('🚀 ~ TaskController ~ getAll ~ err:', err);
           throw new HttpException(
-            err.message || 'Failed to fetch tasks',
+            err.details || err.message || 'Failed to fetch tasks',
             toHttpStatus(err),
           );
         }),

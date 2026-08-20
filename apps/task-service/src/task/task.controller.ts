@@ -22,6 +22,22 @@ export class TaskServiceController {
     };
   }
 
+  @GrpcMethod('TaskService', 'GetTasks')
+  async grpcGetTasks(data: { userId: string }) {
+    this.logger.log(`[gRPC] Fetching tasks for user: ${data.userId}`);
+    const result = await this.taskService.findAllByUserId(data.userId);
+    return {
+      message: result.message,
+      tasks: result.tasks.map((t: any) => ({
+        id: t._id.toString(),
+        title: t.title,
+        description: t.description,
+        userId: t.userId,
+        message: '',
+      })),
+    };
+  }
+
   @MessagePattern('task.findAllByUserId')
   findAllByUserId(body: { userId: string }) {
     return this.taskService.findAllByUserId(body.userId);
