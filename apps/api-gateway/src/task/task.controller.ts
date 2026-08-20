@@ -3,6 +3,7 @@ import { Body, Controller, Get, HttpException, Inject, Post, Req, UseGuards, OnM
 import type { ClientGrpc, ClientProxy } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { TaskDto, getGrpcMetadata, toHttpStatus, wrapWithCircuitbreaker } from '@app/shared';
+import { Throttle } from '../common/decorators/throttle.decorator';
 
 interface TaskServiceClient {
   createTask(data: any, metadata?: any): any;
@@ -41,6 +42,7 @@ export class TaskController implements OnModuleInit {
       );
   }
 
+  @Throttle(10000, 60)
   @Get('all')
   getAll(@Req() req: any) {
     return this.taskService
