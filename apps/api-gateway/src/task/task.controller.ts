@@ -27,6 +27,7 @@ export class TaskController implements OnModuleInit {
     this.taskService = wrapWithCircuitbreaker(this.taskClient.getService<TaskServiceClient>('TaskService'), 'TaskService');
   }
 
+  @Throttle(5000, 60) //for testing
   @Post('create')
   create(@Body() body: TaskDto, @Req() req: any) {
     return this.taskService
