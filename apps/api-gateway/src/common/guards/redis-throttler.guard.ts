@@ -4,6 +4,18 @@ import { THROTTLE_KEY, ThrottleOptions } from "../decorators/throttle.decorator"
 import { RedisService } from "@app/shared";
 import { ConfigService } from "@nestjs/config";
 
+// Atomically increments a counter and sets its TTL only on first creation.
+// Using a Lua script ensures INCR + EXPIRE execute as a single Redis operation,
+// preventing the race condition where concurrent requests all see ttl === -1
+// before any EXPIRE is applied.
+const THROTTLE_SCRIPT = `
+local current = redis.call('INCR', KEYS[1])
+if current == 1 then
+  redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+return current
+`;
+
 @Injectable()
 export class RedisThrottlerGuard implements CanActivate {
 
@@ -43,15 +55,11 @@ export class RedisThrottlerGuard implements CanActivate {
     const redis = this.redisService.getClient();
 
     try {
-      // Increment request count atomically
-      const currentRequests = await redis.incr(redisKey);
-
-      // Get key time-to-live window
-      const ttl = await redis.ttl(redisKey);
-      // If the key was just created (no expiration yet), set the expiration window
-      if (ttl === -1) {
-        await redis.expire(redisKey, options.ttl);
-      }
+      // Atomically increment and, on first creation, set the TTL window.
+      // The Lua script runs as a single Redis operation — no race condition.
+      const currentRequests = await redis.eval(
+        THROTTLE_SCRIPT, 1, redisKey, String(options.ttl),
+      ) as number;
       // Check if threshold exceeded
       if (currentRequests > options.limit) {
         this.logger.warn(`Rate limit exceeded for client: ${clientIdentifier} on path: ${routePath}`);
