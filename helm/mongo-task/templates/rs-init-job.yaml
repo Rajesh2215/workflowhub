@@ -4,12 +4,14 @@ metadata:
   name: {{ include "mongo-task.fullname" . }}-rs-init
   namespace: {{ .Release.Namespace }}
   annotations:
-    # Run this Job after all chart resources (StatefulSet + Services) are created.
-    helm.sh/hook: post-install
+    # Run after all chart resources are created on both fresh installs AND upgrades.
+    # post-install alone would skip this on every helm upgrade after the first deploy.
+    helm.sh/hook: post-install,post-upgrade
     helm.sh/hook-weight: "5"
-    # Delete the previous run before re-creating on helm upgrade;
-    # delete on success to keep the cluster clean (logs are in pod events).
-    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    # before-hook-creation: delete the previous Job before creating a new one (idempotent).
+    # hook-succeeded is intentionally OMITTED so the completed Job object persists —
+    # the CI verify step uses 'kubectl wait --for=condition=complete' which requires
+    # the Job object to still exist after it finishes.
 spec:
   # Retry up to 5 times in case pods are not yet fully ready.
   backoffLimit: 5
