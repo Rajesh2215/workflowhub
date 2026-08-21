@@ -1,0 +1,20 @@
+# Client service — standard ClusterIP
+#
+# Used by the task-service application as a stable in-cluster endpoint.
+# The MongoDB driver uses the seed hosts in MONGO_URI to discover the
+# replica set topology; this service acts as an additional fallback entry point.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mongo-task.fullname" . }}-client
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "mongo-task.fullname" . }}
+spec:
+  selector:
+    app: {{ include "mongo-task.fullname" . }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+      name: mongo
+  type: ClusterIP

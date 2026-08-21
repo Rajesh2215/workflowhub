@@ -25,6 +25,8 @@ jobs:
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       RABBITMQ_URL: ${{ secrets.RABBITMQ_URL }}
       MONGO_URI_AUTH: ${{ secrets.MONGO_URI_AUTH }}
+      # MONGO_URI_TASK must include all 3 replica-set seed hosts:
+      # mongodb://mongo-task-0.mongo-task:27017,mongo-task-1.mongo-task:27017,mongo-task-2.mongo-task:27017/task?replicaSet=rs0
       MONGO_URI_TASK: ${{ secrets.MONGO_URI_TASK }}
       MONGO_URI_NOTIFICATION: ${{ secrets.MONGO_URI_NOTIFICATION }}
       MONGO_URI_ANALYTICS: ${{ secrets.MONGO_URI_ANALYTICS }}
@@ -162,7 +164,23 @@ jobs:
       # -----------------------------------
       # 11. Verify deployment
       # -----------------------------------
-      - name: Verify deployment
+      - name: Verify mongo-task replica set
+        run: |
+          # mongo-task is a StatefulSet, not a Deployment — use rollout status statefulset/
+          kubectl rollout status statefulset/mongo-task \
+            -n workflowhub \
+            --timeout=5m
+
+          # The Helm post-install hook (rs-init Job) runs rs.initiate() automatically.
+          # Block here until the job completes so we know the replica set is healthy
+          # before verifying the application services below.
+          echo "Waiting for mongo-task replica set init job..."
+          kubectl wait --for=condition=complete job/mongo-task-rs-init \
+            -n workflowhub \
+            --timeout=2m
+          echo "mongo-task replica set is healthy."
+
+      - name: Verify application services
         run: |
           kubectl get pods -n workflowhub
 

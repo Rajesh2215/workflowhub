@@ -1,0 +1,90 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "mongo-task.fullname" . }}-rs-init
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    # Run this Job after all chart resources (StatefulSet + Services) are created.
+    helm.sh/hook: post-install
+    helm.sh/hook-weight: "5"
+    # Delete the previous run before re-creating on helm upgrade;
+    # delete on success to keep the cluster clean (logs are in pod events).
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  # Retry up to 5 times in case pods are not yet fully ready.
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: rs-init
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          # Inject Helm-rendered values as environment variables so the bash
+          # script does not mix Go template syntax with shell syntax.
+          env:
+            - name: RS_NAME
+              value: {{ .Values.replicaSetName | quote }}
+            - name: CHART_NAME
+              value: {{ include "mongo-task.fullname" . | quote }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+          command:
+            - bash
+            - -c
+            - |
+              set -euo pipefail
+
+              PRIMARY="${CHART_NAME}-0.${CHART_NAME}.${NAMESPACE}.svc.cluster.local:27017"
+              MEMBER_1="${CHART_NAME}-0.${CHART_NAME}.${NAMESPACE}.svc.cluster.local:27017"
+              MEMBER_2="${CHART_NAME}-1.${CHART_NAME}.${NAMESPACE}.svc.cluster.local:27017"
+              MEMBER_3="${CHART_NAME}-2.${CHART_NAME}.${NAMESPACE}.svc.cluster.local:27017"
+
+              echo "==> Waiting for all 3 replica set members to accept connections..."
+              for host in "$MEMBER_1" "$MEMBER_2" "$MEMBER_3"; do
+                until mongosh --host "$host" --quiet --eval "db.adminCommand('ping').ok" 2>/dev/null | grep -q "^1$"; do
+                  echo "    [$host] not ready yet, retrying in 3s..."
+                  sleep 3
+                done
+                echo "    [$host] is ready."
+              done
+
+              echo "==> Checking if replica set '${RS_NAME}' is already initialized..."
+              ALREADY_INIT=$(mongosh --host "$PRIMARY" --quiet \
+                --eval "try { var s = rs.status(); print(s.ok === 1 ? 'yes' : 'no'); } catch(e) { print('no'); }" \
+                2>/dev/null || echo "no")
+
+              if [ "$ALREADY_INIT" = "yes" ]; then
+                echo "==> Replica set already initialized. Nothing to do."
+                exit 0
+              fi
+
+              echo "==> Initiating replica set '${RS_NAME}' with 3 members..."
+              mongosh --host "$PRIMARY" --eval "
+                var cfg = {
+                  _id: '${RS_NAME}',
+                  members: [
+                    { _id: 0, host: '${MEMBER_1}', priority: 2 },
+                    { _id: 1, host: '${MEMBER_2}', priority: 1 },
+                    { _id: 2, host: '${MEMBER_3}', priority: 1 }
+                  ]
+                };
+                var result = rs.initiate(cfg);
+                printjson(result);
+                if (result.ok !== 1) {
+                  print('ERROR: rs.initiate() failed with code: ' + result.codeName);
+                  quit(1);
+                }
+                print('rs.initiate() succeeded.');
+              "
+
+              echo "==> Waiting for PRIMARY to be elected (this may take ~10s)..."
+              until mongosh --host "$PRIMARY" --quiet \
+                --eval "rs.status().members.filter(function(m){ return m.stateStr === 'PRIMARY'; }).length" \
+                2>/dev/null | grep -q "^1$"; do
+                echo "    No PRIMARY yet, retrying in 3s..."
+                sleep 3
+              done
+
+              echo "==> Replica set '${RS_NAME}' is healthy. PRIMARY elected successfully."
+              mongosh --host "$PRIMARY" --quiet \
+                --eval "rs.status().members.forEach(function(m){ print(m.name + ' -> ' + m.stateStr); })"

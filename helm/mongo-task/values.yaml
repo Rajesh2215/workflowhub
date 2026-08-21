@@ -1,16 +1,21 @@
-replicaCount: 1
-
 image:
   repository: mongo
   tag: "7"
   pullPolicy: IfNotPresent
+
+# Name of the MongoDB replica set.
+# Must match the --replSet arg and the replicaSet= URI parameter used
+# in every service that connects to this MongoDB instance.
+replicaSetName: rs0
 
 service:
   type: ClusterIP
   port: 27017
 
 storage:
-  size: 1Gi
+  # 10Gi per replica (3 nodes = 30Gi total).
+  # Each node gets its own PVC via volumeClaimTemplates.
+  size: 10Gi
   className: ""
 
 probes:
