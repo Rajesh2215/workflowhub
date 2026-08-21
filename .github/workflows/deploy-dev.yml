@@ -132,9 +132,39 @@ jobs:
 
       - name: Deploy to EKS
         run: |
+          # Write secrets to a temporary values file.
+          # This avoids --set-string which splits on commas, breaking
+          # multi-host MongoDB URIs like the mongo-task replica set seed list.
+          # Values are passed verbatim regardless of special characters.
+          cat > /tmp/values.secrets.yaml <<EOF
+          apiGateway:
+            secret:
+              RABBITMQ_URL: "${RABBITMQ_URL}"
+              JWT_SECRET: "${JWT_SECRET}"
+          authService:
+            secret:
+              RABBITMQ_URL: "${RABBITMQ_URL}"
+              MONGO_URI: "${MONGO_URI_AUTH}"
+              JWT_SECRET: "${JWT_SECRET}"
+          taskService:
+            secret:
+              RABBITMQ_URL: "${RABBITMQ_URL}"
+              # Multi-host replica set URI — commas are preserved correctly via YAML file.
+              MONGO_URI: "${MONGO_URI_TASK}"
+          notificationService:
+            secret:
+              RABBITMQ_URL: "${RABBITMQ_URL}"
+              MONGO_URI: "${MONGO_URI_NOTIFICATION}"
+          analyticsService:
+            secret:
+              RABBITMQ_URL: "${RABBITMQ_URL}"
+              MONGO_URI: "${MONGO_URI_ANALYTICS}"
+          EOF
+
           helm upgrade --install workflowhub ./helm/workflowhub \
             --namespace workflowhub \
             --create-namespace \
+            -f /tmp/values.secrets.yaml \
             --set apiGateway.image.repository=$ECR_REGISTRY/workflowhub/api-gateway \
             --set apiGateway.image.tag=$IMAGE_TAG \
             --set authService.image.repository=$ECR_REGISTRY/workflowhub/auth-service \
@@ -148,18 +178,7 @@ jobs:
             --set mongoAuth.storage.className=gp2 \
             --set mongoTask.storage.className=gp2 \
             --set mongoNotification.storage.className=gp2 \
-            --set mongoAnalytics.storage.className=gp2 \
-            --set-string apiGateway.secret.RABBITMQ_URL="$RABBITMQ_URL" \
-            --set-string apiGateway.secret.JWT_SECRET="$JWT_SECRET" \
-            --set-string authService.secret.RABBITMQ_URL="$RABBITMQ_URL" \
-            --set-string authService.secret.MONGO_URI="$MONGO_URI_AUTH" \
-            --set-string authService.secret.JWT_SECRET="$JWT_SECRET" \
-            --set-string taskService.secret.RABBITMQ_URL="$RABBITMQ_URL" \
-            --set-string taskService.secret.MONGO_URI="$MONGO_URI_TASK" \
-            --set-string notificationService.secret.RABBITMQ_URL="$RABBITMQ_URL" \
-            --set-string notificationService.secret.MONGO_URI="$MONGO_URI_NOTIFICATION" \
-            --set-string analyticsService.secret.RABBITMQ_URL="$RABBITMQ_URL" \
-            --set-string analyticsService.secret.MONGO_URI="$MONGO_URI_ANALYTICS"
+            --set mongoAnalytics.storage.className=gp2
 
       # -----------------------------------
       # 11. Verify deployment

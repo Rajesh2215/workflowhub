@@ -5,11 +5,24 @@ rabbitmq:
     username: 'workflowhub'
     password: 'workflowhub'
 
+# mongo-task runs as a 3-node replica set StatefulSet.
+# On Minikube, leave storage.className empty to use the default 'standard' provisioner.
+# (gp2 is AWS EKS-only)
+mongoTask:
+  storage:
+    className: ''
+    size: 1Gi  # Smaller for local dev to save disk
+
 apiGateway:
   image:
     repository: api-gateway
     tag: latest
     pullPolicy: Never
+  # Disable Prometheus ServiceMonitor on Minikube — the Prometheus Operator
+  # CRDs (monitoring.coreos.com/v1) are not installed locally.
+  # ServiceMonitor is enabled on EKS via values.eks.yaml.
+  metrics:
+    enabled: false
   secret:
     RABBITMQ_URL: 'amqp://workflowhub:workflowhub@rabbitmq:5672'
     JWT_SECRET: 'workflowhub@123'
@@ -31,7 +44,7 @@ taskService:
     pullPolicy: Never
   secret:
     RABBITMQ_URL: 'amqp://workflowhub:workflowhub@rabbitmq:5672'
-    MONGO_URI: 'mongodb://mongo-task:27017/task'
+    MONGO_URI: 'mongodb://mongo-task-0.mongo-task:27017,mongo-task-1.mongo-task:27017,mongo-task-2.mongo-task:27017/task?replicaSet=rs0'
 
 notificationService:
   image:
