@@ -124,6 +124,24 @@ jobs:
             --name $EKS_CLUSTER_NAME
 
       # -----------------------------------
+      # 9a. One-time mongo-task migration
+      # -----------------------------------
+      - name: Migrate mongo-task to replica set (one-time)
+        run: |
+          # Kubernetes does not allow changing spec.clusterIP on an existing Service
+          # (it is an immutable field). The old standalone mongo-task Service had a
+          # regular ClusterIP; the new headless service requires clusterIP: None.
+          # We must delete the old Service before Helm can create the new one.
+          #
+          # --ignore-not-found=true makes this step a safe no-op on all future
+          # deploys once the headless service is already in place.
+          echo "Removing old standalone mongo-task resources (if present)..."
+          kubectl delete service    mongo-task      -n workflowhub --ignore-not-found=true
+          kubectl delete deployment mongo-task      -n workflowhub --ignore-not-found=true
+          kubectl delete pvc        mongo-task-pvc  -n workflowhub --ignore-not-found=true
+          echo "Migration cleanup done."
+
+      # -----------------------------------
       # 10. Deploy using Helm
       # -----------------------------------
       - name: Build Helm dependencies
